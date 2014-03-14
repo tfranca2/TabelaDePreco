@@ -64,8 +64,9 @@ public class TabelaDePreco extends javax.swing.JFrame {
     private float pauta =  2.47f;//				2.47f 			1.78f			1.81f
     private float quantidade = 24;//			24				12				24
     private float ipi = 4.59504f;//				4.59504f		1.24026f		2.42650f
-    private float precoFinal = 60;//			60				20				40
-    private float precoFabrica = 0;//			53.97173f		17.79800f		35.40370f
+    private float precoFinal = 60.00f;//		60.00f			14.50f			34.00f
+    private float precoFabrica = 0;//			53.97173f		10.26375f		27.18452f
+    private JButton btn_Localizar;
 
     public static void main(String[] args) {
         TabelaDePreco janela = new TabelaDePreco();
@@ -74,8 +75,8 @@ public class TabelaDePreco extends javax.swing.JFrame {
     }
 
     public TabelaDePreco() {
-//        super();
-//        desenhaJanela();
+        super();
+        desenhaJanela();
         
         float baseDeCalculo = precoFinal-ipi-pauta;
         while(!bateuMetaCom(baseDeCalculo)){
@@ -284,9 +285,19 @@ public class TabelaDePreco extends javax.swing.JFrame {
             pnl_cadastroProduto.add(lbl_valoresPorEstado);
             
             edt_codigo = new JTextField();
-            edt_codigo.setBounds(10, 25, 65, 20);
+            edt_codigo.setBounds(10, 25, 45, 20);
             pnl_cadastroProduto.add(edt_codigo);
             edt_codigo.setColumns(10);
+            
+            btn_Localizar = new JButton("...");
+            btn_Localizar.setToolTipText("Localizar");
+            btn_Localizar.addActionListener(new ActionListener() {
+            	public void actionPerformed(ActionEvent arg0) {
+            		
+            	}
+            });
+            btn_Localizar.setBounds(60, 25, 20, 20);
+            pnl_cadastroProduto.add(btn_Localizar);
             btn_excluir.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent arg0) {
                     
