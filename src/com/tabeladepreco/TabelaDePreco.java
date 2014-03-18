@@ -3,10 +3,19 @@ package com.tabeladepreco;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.io.StringWriter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -14,8 +23,21 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
-import javax.swing.WindowConstants;
 import javax.swing.table.DefaultTableModel;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import java.awt.Color;
 
 @SuppressWarnings("serial")
 public class TabelaDePreco extends javax.swing.JFrame {
@@ -33,13 +55,13 @@ public class TabelaDePreco extends javax.swing.JFrame {
     private JTextField edt_ipi;
     private JLabel lbl_ipi;
     private JTable tbl_impostos;
+    private DefaultTableModel model;
     private JScrollPane scp_impostos;
     private JLabel lbl_codigo;
     private JButton btn_excluir;
     private JButton btn_incluir;
     private JComboBox<String> cbx_codigoProduto;
     private JLabel lbl_codigoProduto;
-    private JCheckBox chc_vendaDentroEstado;
     private JComboBox<String> cbx_estadoOrigem;
     private JComboBox<String> cbx_estadoDestino;
     private JTextField edt_produto;
@@ -48,7 +70,6 @@ public class TabelaDePreco extends javax.swing.JFrame {
     private JTextField edt_baseRetido;
     private JTextField edt_ipi_tbp;
     private JTextField edt_retido;
-    private JButton btnCalcular;
     private JLabel lbl_origem;
     private JLabel lbl_destino;
     private JLabel lbl_produto;
@@ -59,14 +80,16 @@ public class TabelaDePreco extends javax.swing.JFrame {
     private JLabel lbl_retido;
     private JLabel lbl_valoresPorEstado;
     private JTextField edt_codigo;
-                                   //			600ML			LATA			LONG NECK
-    private float aliquota = 0.27f;//														
-    private float pauta =  2.47f;//				2.47f 			1.78f			1.81f
-    private float quantidade = 24;//			24				12				24
-    private float ipi = 4.59504f;//				4.59504f		1.24026f		2.42650f
-    private float precoFinal = 60.00f;//		60.00f			14.50f			34.00f
-    private float precoFabrica = 0;//			53.97173f		10.26375f		27.18452f
     private JButton btn_Localizar;
+    private JCheckBox chc_vendaDentroEstado;
+    private JButton btn_calcular;
+    
+    private float aliquota;
+    private float pauta;
+    private float quantidade;
+    private float ipi;
+    private float precoFinal;
+    private float precoFabrica;
 
     public static void main(String[] args) {
         TabelaDePreco janela = new TabelaDePreco();
@@ -78,22 +101,24 @@ public class TabelaDePreco extends javax.swing.JFrame {
         super();
         desenhaJanela();
         
-        float baseDeCalculo = precoFinal-ipi-pauta;
-        while(!bateuMetaCom(baseDeCalculo)){
-            if(calcular(baseDeCalculo)<precoFinal)
-                baseDeCalculo = baseDeCalculo+0.0001f;
-            else if(calcular(baseDeCalculo)>precoFinal)
-                baseDeCalculo = baseDeCalculo-0.00001f;
-        }
-        precoFabrica = baseDeCalculo;
-        System.out.println("Preço fábrica: R$ "+precoFabrica);
-        
-        System.exit(0);
+        					//			600ML			LATA			LONG NECK
+		aliquota = 0.27f;//														
+		pauta =  2.47f;//				2.47f 			1.78f			1.81f
+		quantidade = 24;//				24				12				24
+		ipi = 4.59504f;//				4.59504f		1.24026f		2.42650f
+		precoFinal = 0;//			60.00f			14.50f			34.00f
+	//  precoFabrica					53.97173f		10.26375f		27.18452f
+		        
+		
+		
+        criarArquivoXml();
+	     
+        //System.exit(0);
     }
 
-    private void desenhaJanela() {
+	private void desenhaJanela() {
         try {
-            setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             getContentPane().setLayout(null);
             setSize(500,450);
             setPreferredSize(getSize()); 
@@ -133,6 +158,15 @@ public class TabelaDePreco extends javax.swing.JFrame {
             
             chc_vendaDentroEstado = new JCheckBox("Venda para dentro do estado");
             chc_vendaDentroEstado.setSelected(true);
+            chc_vendaDentroEstado.addItemListener(new ItemListener() {
+            	public void itemStateChanged(ItemEvent arg0) {
+            		if(chc_vendaDentroEstado.isSelected()){
+            			cbx_estadoDestino.setEnabled(false);
+            		} else {
+            			cbx_estadoDestino.setEnabled(true);
+            		} 
+            	}
+            });
             chc_vendaDentroEstado.setBounds(269, 58, 180, 23);
             pnl_tabelaDePreco.add(chc_vendaDentroEstado);
             
@@ -167,6 +201,7 @@ public class TabelaDePreco extends javax.swing.JFrame {
             pnl_tabelaDePreco.add(lbl_precoFabrica);
             
             edt_precoFabrica = new JTextField();
+            edt_precoFabrica.setForeground(Color.RED);
             edt_precoFabrica.setBounds(186, 160, 86, 20);
             pnl_tabelaDePreco.add(edt_precoFabrica);
             edt_precoFabrica.setColumns(10);
@@ -207,14 +242,34 @@ public class TabelaDePreco extends javax.swing.JFrame {
             pnl_tabelaDePreco.add(edt_retido);
             edt_retido.setColumns(10);
             
-            btnCalcular = new JButton("Calcular");
-            btnCalcular.addActionListener(new ActionListener() {
+            btn_calcular = new JButton("Calcular");
+            btn_calcular.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent arg0) {
+                	
+                	precoFinal = Float.parseFloat(edt_precoFinal.getText());
+                	
+                	float baseDeCalculo = precoFinal-ipi-pauta;
+                    while(!bateuMetaCom(baseDeCalculo)){
+                        if(calcular(baseDeCalculo)<precoFinal)
+                            baseDeCalculo = baseDeCalculo+0.0001f;
+                        else if(calcular(baseDeCalculo)>precoFinal)
+                            baseDeCalculo = baseDeCalculo-0.00001f;
+                    }
+                    edt_precoFabrica.setText(String.valueOf( baseDeCalculo ));
+                    lbl_precoFabrica.setForeground(Color.RED);
                     
+                    edt_ipi_tbp.setText(String.valueOf(ipi));
+            		precoFabrica = Float.parseFloat(edt_precoFabrica.getText());
+            		float icms = precoFabrica * aliquota;
+            		edt_icms.setText(String.valueOf( icms ));
+            		float baseRetido = pauta*quantidade;
+            		edt_baseRetido.setText(String.valueOf( baseRetido ));
+            		float retido = (baseRetido*aliquota)-icms;
+            		edt_retido.setText(String.valueOf( retido ));
                 }
             });
-            btnCalcular.setBounds(186, 288, 89, 23);
-            pnl_tabelaDePreco.add(btnCalcular);
+            btn_calcular.setBounds(186, 288, 89, 23);
+            pnl_tabelaDePreco.add(btn_calcular);
 
             pnl_cadastroProduto= new JPanel();
             tbp_painel.addTab("Cadastro de Produto", null, pnl_cadastroProduto, null);
@@ -252,14 +307,14 @@ public class TabelaDePreco extends javax.swing.JFrame {
             pnl_cadastroProduto.add(scp_impostos);
             
             tbl_impostos = new JTable();
-            tbl_impostos.setModel(new DefaultTableModel(
-                new Object[][] {
-                    {null, null, null},
-                },
-                new String[] {
-                    "Estado", "Aliquota", "Pauta"
-                }
-            ));
+            model = new DefaultTableModel(
+                	new Object[][] {
+                    		{null, null, null, null},
+                    	},
+                    	new String[] {
+                    		"Estado", "Pauta", "Aliquota Estadual", "Aliquota Interestadual"
+                    	});
+            tbl_impostos.setModel( model );
             scp_impostos.setViewportView(tbl_impostos);
             
             lbl_codigo = new JLabel("C\u00F3digo");
@@ -293,7 +348,16 @@ public class TabelaDePreco extends javax.swing.JFrame {
             btn_Localizar.setToolTipText("Localizar");
             btn_Localizar.addActionListener(new ActionListener() {
             	public void actionPerformed(ActionEvent arg0) {
-            		
+            		LocalizarProduto localizar = new LocalizarProduto();
+                    JDialog dialog = new JDialog(localizar, false);
+                    
+                    dialog.setModal(true);// TRAVA O FOCO NA JANELA
+                    dialog.setContentPane(localizar.getContentPane());// INSERE O PAINEL PRONTO
+                    dialog.setBounds(localizar.getBounds());// INSERE AS CONFIGURACOES
+                    dialog.setResizable(false);
+                    dialog.setTitle("Localizar Produto");
+                    dialog.setLocation(500, 200);
+                    dialog.setVisible(true);
             	}
             });
             btn_Localizar.setBounds(60, 25, 20, 20);
@@ -321,4 +385,84 @@ public class TabelaDePreco extends javax.swing.JFrame {
     private float calcular(float baseDeCalculo){
         return baseDeCalculo+ipi+(((pauta*quantidade)*aliquota)-(baseDeCalculo*aliquota));
     }
+    
+    private void criarArquivoXml(){
+    	try {
+	    	
+	    	DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+	    	DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+	    	
+	    	//root elements
+	    	Document doc = docBuilder.newDocument();
+	    	Element rootElement = doc.createElement("produtos");
+	    	doc.appendChild(rootElement);
+	    	
+	    	//tag principal
+	    	Element produto = doc.createElement("produto");
+	    	rootElement.appendChild(produto);
+	    	
+	    	Element codigo = doc.createElement("codigo");
+	    	Element descricao = doc.createElement("descricao");
+	    	Element quantidade = doc.createElement("quantidade");
+	    	Element ipi = doc.createElement("ipi");
+	    	
+	    	produto.appendChild(codigo);
+	    	produto.appendChild(descricao);
+	    	produto.appendChild(quantidade);
+	    	produto.appendChild(ipi);
+	    	
+	    	codigo.appendChild(doc.createTextNode("100"));
+	    	descricao.appendChild(doc.createTextNode("CERVEJA PROIBIDA 600ML"));
+	    	quantidade.appendChild(doc.createTextNode("24"));
+	    	ipi.appendChild(doc.createTextNode("4.59504"));
+	    	
+	    	Element estado = doc.createElement("estado");
+	    	
+	    	Element uf = doc.createElement("uf");
+	    	Element pauta = doc.createElement("pauta");
+	    	Element aliquotaEstadual = doc.createElement("aliquotaEstadual");
+	    	Element aliquotaInterestadual = doc.createElement("aliquotaInterestadual");
+	    	
+	    	estado.appendChild(uf);
+	    	estado.appendChild(pauta);
+	    	estado.appendChild(aliquotaEstadual);
+	    	estado.appendChild(aliquotaInterestadual);
+	    	
+	    	uf.appendChild(doc.createTextNode("CE"));
+	    	pauta.appendChild(doc.createTextNode("2.47"));
+	    	aliquotaEstadual.appendChild(doc.createTextNode("0.27"));
+	    	aliquotaInterestadual.appendChild(doc.createTextNode("0.27"));
+	    	
+	    	produto.appendChild(estado);
+	    	
+	    	TransformerFactory transformerFactory = TransformerFactory.newInstance();
+	    	Transformer transformer = transformerFactory.newTransformer();
+	    	DOMSource source = new DOMSource(doc);
+	    	
+	    	StringWriter stringWriter = new StringWriter();
+	    	StreamResult result = new StreamResult(stringWriter);
+
+	    	transformer.transform(source, result);
+	    	
+	    	//escrevendo dados no arquivo xml
+	    	FileOutputStream saida;  
+	    	PrintStream fileSaida;
+	    	
+	    	try {  
+	    		saida = new FileOutputStream(".\\arquivo.xml");  
+	    		fileSaida = new PrintStream(saida);  
+	    		fileSaida.print(stringWriter.toString());  
+	    	}catch (Exception e) {  
+	    		System.err.println(e);  
+	    	}  
+	    	
+	    } catch (ParserConfigurationException pce) {
+	    	pce.printStackTrace();
+	    } catch (TransformerConfigurationException ex) {
+	    	Logger.getLogger(TabelaDePreco.class.getName()).log(Level.SEVERE, null, ex);
+	    } catch (TransformerException ex) {
+	    	Logger.getLogger(TabelaDePreco.class.getName()).log(Level.SEVERE, null, ex);
+	    } 
+    }
+    
 }

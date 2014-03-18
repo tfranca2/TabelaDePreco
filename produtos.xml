@@ -1,0 +1,36 @@
+<?xml version="1.0" endoding="UTF-8"?>
+<produto>
+	<codigo>100</codigo>
+	<descricao>CERVEJA PROIBIDA 600ML</descricao>
+	<quantidade>24</quantidade>
+	<ipi>4.59504</ipi>
+	<estado>
+		<uf>CE</uf>
+		<aliquota>0.27</aliquota>
+		<pauta>2.47</pauta>
+	</estado>
+</produto>
+
+<produto>
+	<codigo>101</codigo>
+	<descricao>CERVEJA PROIBIDA LATA 350ML</descricao>
+	<quantidade>12</quantidade>
+	<ipi>1.24026</ipi>
+	<estado>
+		<uf>CE</uf>
+		<aliquota>0.27</aliquota>
+		<pauta>1.78</pauta>
+	</estado>
+</produto>
+
+<produto>
+	<codigo>102</codigo>
+	<descricao>CERVEJA PROIBIDA LONG NECK 355ML</descricao>
+	<quantidade>24</quantidade>
+	<ipi>2.42650</ipi>
+	<estado>
+		<uf>CE</uf>
+		<aliquota>0.27</aliquota>
+		<pauta>1.81</pauta>
+	</estado>
+</produto>
