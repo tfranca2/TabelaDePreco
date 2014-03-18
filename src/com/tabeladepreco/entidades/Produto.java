@@ -1,12 +1,13 @@
 package com.tabeladepreco.entidades;
 
+
 public class Produto{
     
     private int codigo;
     private String descricao;
     private float quantidade;
     private float ipi;
-    private Estado estado;
+    private Estado estados;
     
 	public int getCodigo() {
 		return codigo;
@@ -31,18 +32,11 @@ public class Produto{
 	}
 	public void setIpi(float ipi) {
 		this.ipi = ipi;
-	}	
-	public Estado getEstado() {
-		return estado;
 	}
-	public void setEstado(Estado estado) {
-		this.estado = estado;
+	public Estado getEstados() {
+		return estados;
 	}
-	
-	@Override
-	public String toString() {
-		return "Produto [codigo=" + codigo + ", descricao=" + descricao
-				+ ", quantidade=" + quantidade + ", ipi=" + ipi + ", estado="
-				+ estado + "]";
+	public void setEstados(Estado estados) {
+		this.estados = estados;
 	}
 }

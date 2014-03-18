@@ -1,10 +1,13 @@
 package com.tabeladepreco;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.io.StringWriter;
@@ -17,6 +20,7 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
@@ -36,8 +40,6 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-
-import java.awt.Color;
 
 @SuppressWarnings("serial")
 public class TabelaDePreco extends javax.swing.JFrame {
@@ -59,7 +61,7 @@ public class TabelaDePreco extends javax.swing.JFrame {
     private JScrollPane scp_impostos;
     private JLabel lbl_codigo;
     private JButton btn_excluir;
-    private JButton btn_incluir;
+    private JButton btn_salvar;
     private JComboBox<String> cbx_codigoProduto;
     private JLabel lbl_codigoProduto;
     private JComboBox<String> cbx_estadoOrigem;
@@ -100,7 +102,6 @@ public class TabelaDePreco extends javax.swing.JFrame {
     public TabelaDePreco() {
         super();
         desenhaJanela();
-        
         					//			600ML			LATA			LONG NECK
 		aliquota = 0.27f;//														
 		pauta =  2.47f;//				2.47f 			1.78f			1.81f
@@ -108,12 +109,7 @@ public class TabelaDePreco extends javax.swing.JFrame {
 		ipi = 4.59504f;//				4.59504f		1.24026f		2.42650f
 		precoFinal = 0;//			60.00f			14.50f			34.00f
 	//  precoFabrica					53.97173f		10.26375f		27.18452f
-		        
 		
-		
-        criarArquivoXml();
-	     
-        //System.exit(0);
     }
 
 	private void desenhaJanela() {
@@ -201,7 +197,6 @@ public class TabelaDePreco extends javax.swing.JFrame {
             pnl_tabelaDePreco.add(lbl_precoFabrica);
             
             edt_precoFabrica = new JTextField();
-            edt_precoFabrica.setForeground(Color.RED);
             edt_precoFabrica.setBounds(186, 160, 86, 20);
             pnl_tabelaDePreco.add(edt_precoFabrica);
             edt_precoFabrica.setColumns(10);
@@ -245,27 +240,40 @@ public class TabelaDePreco extends javax.swing.JFrame {
             btn_calcular = new JButton("Calcular");
             btn_calcular.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent arg0) {
-                	
-                	precoFinal = Float.parseFloat(edt_precoFinal.getText());
-                	
-                	float baseDeCalculo = precoFinal-ipi-pauta;
-                    while(!bateuMetaCom(baseDeCalculo)){
-                        if(calcular(baseDeCalculo)<precoFinal)
-                            baseDeCalculo = baseDeCalculo+0.0001f;
-                        else if(calcular(baseDeCalculo)>precoFinal)
-                            baseDeCalculo = baseDeCalculo-0.00001f;
-                    }
-                    edt_precoFabrica.setText(String.valueOf( baseDeCalculo ));
-                    lbl_precoFabrica.setForeground(Color.RED);
-                    
-                    edt_ipi_tbp.setText(String.valueOf(ipi));
-            		precoFabrica = Float.parseFloat(edt_precoFabrica.getText());
-            		float icms = precoFabrica * aliquota;
-            		edt_icms.setText(String.valueOf( icms ));
-            		float baseRetido = pauta*quantidade;
-            		edt_baseRetido.setText(String.valueOf( baseRetido ));
-            		float retido = (baseRetido*aliquota)-icms;
-            		edt_retido.setText(String.valueOf( retido ));
+                	try{
+                		precoFinal = Float.parseFloat(edt_precoFinal.getText());
+                		
+                		float baseDeCalculo = precoFinal-ipi-pauta;
+                		while(!bateuMetaCom(baseDeCalculo)){
+                			if(calcular(baseDeCalculo)<precoFinal)
+                				baseDeCalculo = baseDeCalculo+0.0001f;
+                			else if(calcular(baseDeCalculo)>precoFinal)
+                				baseDeCalculo = baseDeCalculo-0.00001f;
+                		}
+                		edt_precoFabrica.setText(String.valueOf( baseDeCalculo ));
+                		edt_precoFabrica.setForeground(Color.RED);
+                		lbl_precoFabrica.setForeground(Color.RED);
+                		
+                		edt_ipi_tbp.setText(String.valueOf(ipi));
+                		precoFabrica = Float.parseFloat(edt_precoFabrica.getText());
+                		float icms = precoFabrica * aliquota;
+                		edt_icms.setText(String.valueOf( icms ));
+                		float baseRetido = pauta*quantidade;
+                		edt_baseRetido.setText(String.valueOf( baseRetido ));
+                		float retido = (baseRetido*aliquota)-icms;
+                		edt_retido.setText(String.valueOf( retido ));
+                	} catch(Exception e){
+                		JOptionPane.showMessageDialog(null, "Preencha o campo com uma referencia válida!");
+                		edt_baseRetido.setText("");
+                		edt_ipi_tbp.setText("");
+                		edt_icms.setText("");
+                		edt_baseRetido.setText("");
+                		edt_retido.setText("");
+                		edt_precoFabrica.setText("");
+                		edt_precoFabrica.setForeground(Color.BLACK);
+                		lbl_precoFabrica.setForeground(Color.BLACK);
+                		edt_precoFinal.requestFocus();
+                	}
                 }
             });
             btn_calcular.setBounds(186, 288, 89, 23);
@@ -315,20 +323,28 @@ public class TabelaDePreco extends javax.swing.JFrame {
                     		"Estado", "Pauta", "Aliquota Estadual", "Aliquota Interestadual"
                     	});
             tbl_impostos.setModel( model );
+            tbl_impostos.addKeyListener(new KeyAdapter(){  
+                @Override  
+                public void keyPressed(KeyEvent e) {                  
+                	if(e.getKeyCode() == KeyEvent.VK_ENTER) { 
+                		model.addRow(new Object[]{null,null,null,null});  
+                    }  
+                }  
+            });
             scp_impostos.setViewportView(tbl_impostos);
             
             lbl_codigo = new JLabel("C\u00F3digo");
             lbl_codigo.setBounds(10, 11, 46, 14);
             pnl_cadastroProduto.add(lbl_codigo);
             
-            btn_incluir = new JButton("Incluir");
-            btn_incluir.addActionListener(new ActionListener() {
+            btn_salvar = new JButton("Salvar");
+            btn_salvar.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent arg0) {
-                    
+                	criarArquivoXml();
                 }
             });
-            btn_incluir.setBounds(10, 328, 89, 23);
-            pnl_cadastroProduto.add(btn_incluir);
+            btn_salvar.setBounds(10, 328, 89, 23);
+            pnl_cadastroProduto.add(btn_salvar);
             
             btn_excluir = new JButton("Excluir");
             btn_excluir.setBounds(360, 328, 89, 23);
@@ -364,7 +380,17 @@ public class TabelaDePreco extends javax.swing.JFrame {
             pnl_cadastroProduto.add(btn_Localizar);
             btn_excluir.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent arg0) {
-                    
+                	
+                	if(tbl_impostos.getSelectedRow() == -1){
+                		JOptionPane.showMessageDialog(null, "Selecione um registro para excluir!");
+                	}else{
+	                	Object[] options = { "Sim", "Não" };
+	                	int confirmacao = JOptionPane.showOptionDialog(null, "Tem certeza que deseja excluir a linha selecionada?",
+	                													"Excluir registro", JOptionPane.YES_NO_OPTION, 
+	                													JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+	                    if(confirmacao==0)
+	                    	model.removeRow(tbl_impostos.getSelectedRow());
+                	}
                 }
             });
 
