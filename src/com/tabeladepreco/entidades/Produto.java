@@ -1,5 +1,7 @@
 package com.tabeladepreco.entidades;
 
+import java.util.List;
+
 
 public class Produto{
     
@@ -7,7 +9,7 @@ public class Produto{
     private String descricao;
     private float quantidade;
     private float ipi;
-    private Estado estados;
+    private List<Estado> estados;
     
 	public int getCodigo() {
 		return codigo;
@@ -33,10 +35,22 @@ public class Produto{
 	public void setIpi(float ipi) {
 		this.ipi = ipi;
 	}
-	public Estado getEstados() {
-		return estados;
-	}
-	public void setEstados(Estado estados) {
+	public void setEstados(List<Estado> estados) {
 		this.estados = estados;
 	}
+	public List<Estado> getEstados(){
+		return estados;
+	}
+	
+	@Override
+	public String toString() {
+		String s = "Produto [codigo=" + codigo + ", descricao=" + descricao
+				+ ", quantidade=" + quantidade + ", ipi=" + ipi + ",";
+		for (int i = 0; i < estados.size(); i++) 
+			s = s+" "+estados.get(i).toString()+" |";
+		s = s.substring(0, s.length()-1)+"]";
+		
+		return s;
+	}
+	
 }

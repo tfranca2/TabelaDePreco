@@ -4,15 +4,13 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
-import java.io.StringWriter;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -27,19 +25,11 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.table.DefaultTableModel;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+import com.tabeladepreco.entidades.Estado;
+import com.tabeladepreco.entidades.Produto;
 
 @SuppressWarnings("serial")
 public class TabelaDePreco extends javax.swing.JFrame {
@@ -64,16 +54,12 @@ public class TabelaDePreco extends javax.swing.JFrame {
     private JButton btn_salvar;
     private JComboBox<String> cbx_codigoProduto;
     private JLabel lbl_codigoProduto;
-    private JComboBox<String> cbx_estadoOrigem;
-    private JComboBox<String> cbx_estadoDestino;
     private JTextField edt_produto;
     private JTextField edt_precoFabrica;
     private JTextField edt_icms;
     private JTextField edt_baseRetido;
     private JTextField edt_ipi_tbp;
     private JTextField edt_retido;
-    private JLabel lbl_origem;
-    private JLabel lbl_destino;
     private JLabel lbl_produto;
     private JLabel lbl_precoFabrica;
     private JLabel lbl_icms;
@@ -92,6 +78,10 @@ public class TabelaDePreco extends javax.swing.JFrame {
     private float ipi;
     private float precoFinal;
     private float precoFabrica;
+    private List<Produto> listaDeProdutos;
+    private JComboBox<String> cbx_estado;
+    private JLabel lbl_estado;
+    Produto pro = null;
 
     public static void main(String[] args) {
         TabelaDePreco janela = new TabelaDePreco();
@@ -100,15 +90,23 @@ public class TabelaDePreco extends javax.swing.JFrame {
     }
 
     public TabelaDePreco() {
-        super();
+    	super();
+    	try {
+            UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+        } catch (Exception ex) {
+            javax.swing.JOptionPane.showMessageDialog(null, ex.getMessage());
+        }
+        listaDeProdutos = new Xml().LerXml("produtos.xml");
         desenhaJanela();
-        					//			600ML			LATA			LONG NECK
-		aliquota = 0.27f;//														
-		pauta =  2.47f;//				2.47f 			1.78f			1.81f
-		quantidade = 24;//				24				12				24
-		ipi = 4.59504f;//				4.59504f		1.24026f		2.42650f
-		precoFinal = 0;//			60.00f			14.50f			34.00f
-	//  precoFabrica					53.97173f		10.26375f		27.18452f
+        
+        
+//										600ML			LATA			LONG NECK
+//		aliquota = 0.27f;														
+//		pauta =  2.47f;//				2.47f 			1.78f			1.81f
+//		quantidade = 24;				24				12				24
+//		ipi = 4.59504f;					4.59504f		1.24026f		2.42650f
+//		precoFinal = 0;					60.00f			14.50f			34.00f
+// 		precoFabrica					53.97173f		10.26375f		27.18452f
 		
     }
 
@@ -116,13 +114,14 @@ public class TabelaDePreco extends javax.swing.JFrame {
         try {
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             getContentPane().setLayout(null);
-            setSize(500,450);
+            setSize(488,400);
             setPreferredSize(getSize()); 
+            setResizable(false);
             setTitle("Montagem de Tabela de Pre\u00E7o");
 
             tbp_painel= new JTabbedPane();
             getContentPane().add(tbp_painel);
-            tbp_painel.setBounds(10, 11, 464, 390);
+            tbp_painel.setBounds(10, 11, 464, 350);
 
             pnl_tabelaDePreco= new JPanel();
             pnl_tabelaDePreco.setBounds(48, 35, 224, 204);
@@ -136,59 +135,51 @@ public class TabelaDePreco extends javax.swing.JFrame {
             pnl_tabelaDePreco.add(lbl_calcularPrecoFabrica);
             
             lbl_precoFinal = new JLabel("Pre\u00E7o Final");
-            lbl_precoFinal.setBounds(10, 45, 69, 14);
+            lbl_precoFinal.setBounds(90, 146, 69, 14);
             pnl_tabelaDePreco.add(lbl_precoFinal);
             
             edt_precoFinal = new JTextField();
-            edt_precoFinal.setBounds(10, 59, 106, 20);
+            edt_precoFinal.setBounds(90, 160, 86, 20);
             pnl_tabelaDePreco.add(edt_precoFinal);
             edt_precoFinal.setColumns(10);
             
             cbx_codigoProduto = new JComboBox<String>();
-            cbx_codigoProduto.setBounds(139, 59, 106, 20);
+            cbx_codigoProduto.addItem("");
+            for (int i = 0; i < listaDeProdutos.size(); i++)
+            	cbx_codigoProduto.addItem(String.valueOf(listaDeProdutos.get(i).getCodigo()));
+            cbx_codigoProduto.setBounds(10, 63, 106, 20);
+            cbx_codigoProduto.addItemListener(new ItemListener() {
+            	public void itemStateChanged(ItemEvent e) {
+            		resetFormulario();
+            		if( cbx_codigoProduto.getSelectedIndex() != 0 )
+                		pro = produtoDaListaPorCodigo(Integer.parseInt((String) cbx_codigoProduto.getSelectedItem()));
+            		else
+            			pro = null;
+            		preencheCampos(pro);
+            	}
+            });
             pnl_tabelaDePreco.add(cbx_codigoProduto);
             
             lbl_codigoProduto = new JLabel("C\u00F3digo do produto");
-            lbl_codigoProduto.setBounds(139, 45, 106, 14);
+            lbl_codigoProduto.setBounds(10, 49, 106, 14);
             pnl_tabelaDePreco.add(lbl_codigoProduto);
             
             chc_vendaDentroEstado = new JCheckBox("Venda para dentro do estado");
             chc_vendaDentroEstado.setSelected(true);
             chc_vendaDentroEstado.addItemListener(new ItemListener() {
-            	public void itemStateChanged(ItemEvent arg0) {
-            		if(chc_vendaDentroEstado.isSelected()){
-            			cbx_estadoDestino.setEnabled(false);
-            		} else {
-            			cbx_estadoDestino.setEnabled(true);
-            		} 
+            	public void itemStateChanged(ItemEvent e) {
+            		aliquotaPauta(pro);
             	}
             });
-            chc_vendaDentroEstado.setBounds(269, 58, 180, 23);
+            chc_vendaDentroEstado.setBounds(186, 114, 198, 23);
             pnl_tabelaDePreco.add(chc_vendaDentroEstado);
             
-            lbl_origem = new JLabel("Origem");
-            lbl_origem.setBounds(173, 90, 46, 14);
-            pnl_tabelaDePreco.add(lbl_origem);
-            
-            lbl_destino = new JLabel("Destino");
-            lbl_destino.setBounds(238, 90, 46, 14);
-            pnl_tabelaDePreco.add(lbl_destino);
-            
-            cbx_estadoOrigem = new JComboBox<String>();
-            cbx_estadoOrigem.setBounds(173, 104, 55, 20);
-            pnl_tabelaDePreco.add(cbx_estadoOrigem);
-            
-            cbx_estadoDestino = new JComboBox<String>();
-            cbx_estadoDestino.setEnabled(false);
-            cbx_estadoDestino.setBounds(238, 104, 55, 20);
-            pnl_tabelaDePreco.add(cbx_estadoDestino);
-            
             lbl_produto = new JLabel("Produto");
-            lbl_produto.setBounds(90, 146, 69, 14);
+            lbl_produto.setBounds(126, 49, 69, 14);
             pnl_tabelaDePreco.add(lbl_produto);
             
             edt_produto = new JTextField();
-            edt_produto.setBounds(90, 160, 86, 20);
+            edt_produto.setBounds(126, 63, 323, 20);
             pnl_tabelaDePreco.add(edt_produto);
             edt_produto.setColumns(10);
             
@@ -254,7 +245,6 @@ public class TabelaDePreco extends javax.swing.JFrame {
                 		edt_precoFabrica.setForeground(Color.RED);
                 		lbl_precoFabrica.setForeground(Color.RED);
                 		
-                		edt_ipi_tbp.setText(String.valueOf(ipi));
                 		precoFabrica = Float.parseFloat(edt_precoFabrica.getText());
                 		float icms = precoFabrica * aliquota;
                 		edt_icms.setText(String.valueOf( icms ));
@@ -264,20 +254,25 @@ public class TabelaDePreco extends javax.swing.JFrame {
                 		edt_retido.setText(String.valueOf( retido ));
                 	} catch(Exception e){
                 		JOptionPane.showMessageDialog(null, "Preencha o campo com uma referencia válida!");
-                		edt_baseRetido.setText("");
-                		edt_ipi_tbp.setText("");
-                		edt_icms.setText("");
-                		edt_baseRetido.setText("");
-                		edt_retido.setText("");
-                		edt_precoFabrica.setText("");
-                		edt_precoFabrica.setForeground(Color.BLACK);
-                		lbl_precoFabrica.setForeground(Color.BLACK);
-                		edt_precoFinal.requestFocus();
+                		resetFormulario();
                 	}
                 }
             });
-            btn_calcular.setBounds(186, 288, 89, 23);
+            btn_calcular.setBounds(185, 288, 89, 23);
             pnl_tabelaDePreco.add(btn_calcular);
+            
+            cbx_estado = new JComboBox<String>();
+            cbx_estado.addItemListener(new ItemListener() {
+            	public void itemStateChanged(ItemEvent e) {
+            		aliquotaPauta(pro);
+            	}
+            });
+            cbx_estado.setBounds(130, 115, 46, 20);
+            pnl_tabelaDePreco.add(cbx_estado);
+            
+            lbl_estado = new JLabel("Estado");
+            lbl_estado.setBounds(90, 118, 46, 14);
+            pnl_tabelaDePreco.add(lbl_estado);
 
             pnl_cadastroProduto= new JPanel();
             tbp_painel.addTab("Cadastro de Produto", null, pnl_cadastroProduto, null);
@@ -292,8 +287,8 @@ public class TabelaDePreco extends javax.swing.JFrame {
             pnl_cadastroProduto.add(edt_descricao);
             edt_descricao.setColumns(10);
             
-            lbl_quantidade = new JLabel("Quant.");
-            lbl_quantidade.setBounds(299, 11, 46, 14);
+            lbl_quantidade = new JLabel("Quantidade");
+            lbl_quantidade.setBounds(299, 11, 70, 14);
             pnl_cadastroProduto.add(lbl_quantidade);
             
             edt_quantidade = new JTextField();
@@ -311,7 +306,7 @@ public class TabelaDePreco extends javax.swing.JFrame {
             pnl_cadastroProduto.add(edt_ipi);
             
             scp_impostos = new JScrollPane();
-            scp_impostos.setBounds(10, 71, 439, 230);
+            scp_impostos.setBounds(10, 71, 439, 200);
             pnl_cadastroProduto.add(scp_impostos);
             
             tbl_impostos = new JTable();
@@ -340,14 +335,30 @@ public class TabelaDePreco extends javax.swing.JFrame {
             btn_salvar = new JButton("Salvar");
             btn_salvar.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent arg0) {
-                	criarArquivoXml();
+                	new Xml().criarArquivoXml(listaDeProdutos, "arquivo.xml");
                 }
             });
-            btn_salvar.setBounds(10, 328, 89, 23);
+            btn_salvar.setBounds(10, 282, 89, 23);
             pnl_cadastroProduto.add(btn_salvar);
             
             btn_excluir = new JButton("Excluir");
-            btn_excluir.setBounds(360, 328, 89, 23);
+            btn_excluir.addActionListener(new ActionListener() {
+            	public void actionPerformed(ActionEvent arg0) {
+            		
+            		if(tbl_impostos.getSelectedRow() == -1){
+            			JOptionPane.showMessageDialog(null, "Selecione um registro para excluir!");
+            		}else{
+            			Object[] options = { "Sim", "Não" };
+            			int confirmacao = JOptionPane.showOptionDialog(null, "Tem certeza que deseja excluir a linha selecionada?",
+            					"Excluir registro", JOptionPane.YES_NO_OPTION, 
+            					JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+            			if(confirmacao==0){
+            				model.removeRow(tbl_impostos.getSelectedRow());
+            			}
+            		}
+            	}
+            });
+            btn_excluir.setBounds(360, 282, 89, 23);
             pnl_cadastroProduto.add(btn_excluir);
             
             lbl_valoresPorEstado = new JLabel("Valores por estado");
@@ -356,6 +367,13 @@ public class TabelaDePreco extends javax.swing.JFrame {
             pnl_cadastroProduto.add(lbl_valoresPorEstado);
             
             edt_codigo = new JTextField();
+            edt_codigo.addFocusListener(new FocusAdapter() {
+            	@Override
+            	public void focusLost(FocusEvent arg0) {
+            		limpaTabela();
+            		preencheTabela(produtoDaListaPorCodigo(Integer.parseInt(edt_codigo.getText())));
+            	}
+            });
             edt_codigo.setBounds(10, 25, 45, 20);
             pnl_cadastroProduto.add(edt_codigo);
             edt_codigo.setColumns(10);
@@ -378,21 +396,6 @@ public class TabelaDePreco extends javax.swing.JFrame {
             });
             btn_Localizar.setBounds(60, 25, 20, 20);
             pnl_cadastroProduto.add(btn_Localizar);
-            btn_excluir.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent arg0) {
-                	
-                	if(tbl_impostos.getSelectedRow() == -1){
-                		JOptionPane.showMessageDialog(null, "Selecione um registro para excluir!");
-                	}else{
-	                	Object[] options = { "Sim", "Não" };
-	                	int confirmacao = JOptionPane.showOptionDialog(null, "Tem certeza que deseja excluir a linha selecionada?",
-	                													"Excluir registro", JOptionPane.YES_NO_OPTION, 
-	                													JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-	                    if(confirmacao==0)
-	                    	model.removeRow(tbl_impostos.getSelectedRow());
-                	}
-                }
-            });
 
             pack();
         } catch(Exception e) {
@@ -400,7 +403,22 @@ public class TabelaDePreco extends javax.swing.JFrame {
         }
     }
 
-    private boolean bateuMetaCom(float baseDeCalculo){
+    protected void resetFormulario() {
+    	edt_baseRetido.setText("");
+		edt_ipi_tbp.setText("");
+		edt_icms.setText("");
+		edt_baseRetido.setText("");
+		edt_retido.setText("");
+		edt_produto.setText("");
+		edt_precoFabrica.setText("");
+		edt_precoFabrica.setForeground(Color.BLACK);
+		lbl_precoFabrica.setForeground(Color.BLACK);
+		edt_precoFinal.setText("");;
+		edt_precoFinal.requestFocus();
+		cbx_estado.removeAllItems();
+	}
+
+	private boolean bateuMetaCom(float baseDeCalculo){
     	float tentativa = calcular(baseDeCalculo);
         if(tentativa == precoFinal)
             return true;
@@ -412,83 +430,64 @@ public class TabelaDePreco extends javax.swing.JFrame {
         return baseDeCalculo+ipi+(((pauta*quantidade)*aliquota)-(baseDeCalculo*aliquota));
     }
     
-    private void criarArquivoXml(){
-    	try {
-	    	
-	    	DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-	    	DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-	    	
-	    	//root elements
-	    	Document doc = docBuilder.newDocument();
-	    	Element rootElement = doc.createElement("produtos");
-	    	doc.appendChild(rootElement);
-	    	
-	    	//tag principal
-	    	Element produto = doc.createElement("produto");
-	    	rootElement.appendChild(produto);
-	    	
-	    	Element codigo = doc.createElement("codigo");
-	    	Element descricao = doc.createElement("descricao");
-	    	Element quantidade = doc.createElement("quantidade");
-	    	Element ipi = doc.createElement("ipi");
-	    	
-	    	produto.appendChild(codigo);
-	    	produto.appendChild(descricao);
-	    	produto.appendChild(quantidade);
-	    	produto.appendChild(ipi);
-	    	
-	    	codigo.appendChild(doc.createTextNode("100"));
-	    	descricao.appendChild(doc.createTextNode("CERVEJA PROIBIDA 600ML"));
-	    	quantidade.appendChild(doc.createTextNode("24"));
-	    	ipi.appendChild(doc.createTextNode("4.59504"));
-	    	
-	    	Element estado = doc.createElement("estado");
-	    	
-	    	Element uf = doc.createElement("uf");
-	    	Element pauta = doc.createElement("pauta");
-	    	Element aliquotaEstadual = doc.createElement("aliquotaEstadual");
-	    	Element aliquotaInterestadual = doc.createElement("aliquotaInterestadual");
-	    	
-	    	estado.appendChild(uf);
-	    	estado.appendChild(pauta);
-	    	estado.appendChild(aliquotaEstadual);
-	    	estado.appendChild(aliquotaInterestadual);
-	    	
-	    	uf.appendChild(doc.createTextNode("CE"));
-	    	pauta.appendChild(doc.createTextNode("2.47"));
-	    	aliquotaEstadual.appendChild(doc.createTextNode("0.27"));
-	    	aliquotaInterestadual.appendChild(doc.createTextNode("0.27"));
-	    	
-	    	produto.appendChild(estado);
-	    	
-	    	TransformerFactory transformerFactory = TransformerFactory.newInstance();
-	    	Transformer transformer = transformerFactory.newTransformer();
-	    	DOMSource source = new DOMSource(doc);
-	    	
-	    	StringWriter stringWriter = new StringWriter();
-	    	StreamResult result = new StreamResult(stringWriter);
-
-	    	transformer.transform(source, result);
-	    	
-	    	//escrevendo dados no arquivo xml
-	    	FileOutputStream saida;  
-	    	PrintStream fileSaida;
-	    	
-	    	try {  
-	    		saida = new FileOutputStream(".\\arquivo.xml");  
-	    		fileSaida = new PrintStream(saida);  
-	    		fileSaida.print(stringWriter.toString());  
-	    	}catch (Exception e) {  
-	    		System.err.println(e);  
-	    	}  
-	    	
-	    } catch (ParserConfigurationException pce) {
-	    	pce.printStackTrace();
-	    } catch (TransformerConfigurationException ex) {
-	    	Logger.getLogger(TabelaDePreco.class.getName()).log(Level.SEVERE, null, ex);
-	    } catch (TransformerException ex) {
-	    	Logger.getLogger(TabelaDePreco.class.getName()).log(Level.SEVERE, null, ex);
-	    } 
+    private Produto produtoDaListaPorCodigo(int codigo) {
+    	for (int i = 0; i < listaDeProdutos.size(); i++) {
+			if( listaDeProdutos.get(i).getCodigo() == codigo ) 
+				return listaDeProdutos.get(i);
+		}
+    	return null;
     }
     
+    private void preencheCampos(Produto p){
+    	if(p==null){
+    		resetFormulario();
+    	}else{
+    		edt_produto.setText(p.getDescricao());
+	    	edt_ipi_tbp.setText(String.valueOf(p.getIpi()));
+	    	quantidade = p.getQuantidade();
+	    	ipi = p.getIpi();
+	    	cbx_estado.removeAllItems();
+	    	for (int i = 0; i < p.getEstados().size(); i++)
+	    		cbx_estado.addItem(p.getEstados().get(i).getUf());
+	    	aliquotaPauta(p);
+    	}
+    }
+    
+    private void preencheTabela(Produto p){
+    	if(p==null){
+    		resetFormulario();
+    	}else{
+    		edt_descricao.setText(p.getDescricao());
+    		edt_quantidade.setText(String.valueOf(p.getQuantidade()));
+    		edt_ipi.setText(String.valueOf(p.getIpi()));
+			
+    		List<Estado> estados = p.getEstados();
+    		
+    		for (int i = 0; i < estados.size(); i++) {
+    			model.addRow(new Object[]{
+    					estados.get(i).getUf(),
+    					estados.get(i).getPauta(),
+    					estados.get(i).getAliquotaEstadual(),
+    					estados.get(i).getAliquotaInterestadual()
+    			});
+			}
+    	}
+    }
+    
+    private void limpaTabela(){
+    	for (int i = 0; i < model.getRowCount(); i++) 
+    		model.removeRow(i);
+    }
+    
+    private void aliquotaPauta(Produto p){
+    	for (int i = 0; i < p.getEstados().size(); i++) {
+			if( p.getEstados().get(i).getUf() == cbx_estado.getSelectedItem() ) {
+				pauta = p.getEstados().get(i).getPauta();
+				if(chc_vendaDentroEstado.isSelected())
+					aliquota = p.getEstados().get(i).getAliquotaEstadual();
+				else
+					aliquota = p.getEstados().get(i).getAliquotaInterestadual();
+			}
+		}
+    }
 }
