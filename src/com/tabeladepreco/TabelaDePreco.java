@@ -10,6 +10,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -24,6 +25,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.table.DefaultTableModel;
@@ -310,6 +312,7 @@ public class TabelaDePreco extends javax.swing.JFrame {
             pnl_cadastroProduto.add(scp_impostos);
             
             tbl_impostos = new JTable();
+            tbl_impostos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
             model = new DefaultTableModel(
                 	new Object[][] {
                     		{null, null, null, null},
@@ -326,6 +329,15 @@ public class TabelaDePreco extends javax.swing.JFrame {
                     }  
                 }  
             });
+            tbl_impostos.addFocusListener(new FocusAdapter() {
+            	@Override
+            	public void focusGained(FocusEvent arg0) {
+            		Produto p = produtoDaListaPorCodigo(Integer.parseInt(edt_codigo.getText()));
+            		p.setDescricao(edt_descricao.getText());
+            		p.setIpi(Float.parseFloat(edt_ipi.getText()));
+            		p.setQuantidade(Float.parseFloat(edt_quantidade.getText()));
+            	}
+            });
             scp_impostos.setViewportView(tbl_impostos);
             
             lbl_codigo = new JLabel("C\u00F3digo");
@@ -335,7 +347,18 @@ public class TabelaDePreco extends javax.swing.JFrame {
             btn_salvar = new JButton("Salvar");
             btn_salvar.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent arg0) {
+                	for (int i = 0; i < listaDeProdutos.size(); i++) {
+						if(listaDeProdutos.get(i).getCodigo() == Integer.parseInt(edt_codigo.getText())){
+							listaDeProdutos.get(i).setEstados(x());
+							break;
+						}
+					}
                 	new Xml().criarArquivoXml(listaDeProdutos, "arquivo.xml");
+                	listaDeProdutos = new Xml().LerXml("arquivo.xml");
+                	
+//                	cbx_codigoProduto.removeAllItems();
+//                	for (int i = 0; i < listaDeProdutos.size(); i++)
+//                    	cbx_codigoProduto.addItem(String.valueOf(listaDeProdutos.get(i).getCodigo()));
                 }
             });
             btn_salvar.setBounds(10, 282, 89, 23);
@@ -353,6 +376,9 @@ public class TabelaDePreco extends javax.swing.JFrame {
             					"Excluir registro", JOptionPane.YES_NO_OPTION, 
             					JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
             			if(confirmacao==0){
+            				Estado e = estadoDaTabela(tbl_impostos.getSelectedRow());
+            				Produto p = produtoDaListaPorCodigo(Integer.parseInt(edt_codigo.getText()));
+            				removeEstadoLista(p, e);
             				model.removeRow(tbl_impostos.getSelectedRow());
             			}
             		}
@@ -435,7 +461,22 @@ public class TabelaDePreco extends javax.swing.JFrame {
 			if( listaDeProdutos.get(i).getCodigo() == codigo ) 
 				return listaDeProdutos.get(i);
 		}
-    	return null;
+    	return new Produto();
+    }
+    
+    private Estado estadoDaTabela(int row){
+    	
+    	System.out.println(tbl_impostos.getValueAt(row, 0));
+    	System.out.println(tbl_impostos.getValueAt(row, 1));
+    	System.out.println(tbl_impostos.getValueAt(row, 2));
+    	System.out.println(tbl_impostos.getValueAt(row, 3));
+    	
+    	Estado estado = new Estado();
+    	estado.setUf((String) tbl_impostos.getValueAt(row, 0));
+    	estado.setPauta(Float.parseFloat((String) tbl_impostos.getValueAt(row, 1)));
+    	estado.setAliquotaEstadual(Float.parseFloat((String) tbl_impostos.getValueAt(row, 2)));
+    	estado.setAliquotaInterestadual(Float.parseFloat((String)  tbl_impostos.getValueAt(row, 3)));
+    	return estado;
     }
     
     private void preencheCampos(Produto p){
@@ -463,20 +504,26 @@ public class TabelaDePreco extends javax.swing.JFrame {
 			
     		List<Estado> estados = p.getEstados();
     		
-    		for (int i = 0; i < estados.size(); i++) {
-    			model.addRow(new Object[]{
-    					estados.get(i).getUf(),
-    					estados.get(i).getPauta(),
-    					estados.get(i).getAliquotaEstadual(),
-    					estados.get(i).getAliquotaInterestadual()
-    			});
+    		try {
+    			for (int i = 0; i < estados.size(); i++) {
+    				model.addRow(new Object[]{
+    						estados.get(i).getUf(),
+    						estados.get(i).getPauta(),
+    						estados.get(i).getAliquotaEstadual(),
+    						estados.get(i).getAliquotaInterestadual()
+    				});
+    			}
+			} catch (Exception e) {
+				// se o codigo do produto nao existir criar novo
+				p.setCodigo(Integer.parseInt(edt_codigo.getText()));
+				listaDeProdutos.add(p);
+				model.addRow(new Object[]{null, null, null, null});
 			}
     	}
     }
     
     private void limpaTabela(){
-    	for (int i = 0; i < model.getRowCount(); i++) 
-    		model.removeRow(i);
+    	model.setNumRows(0);
     }
     
     private void aliquotaPauta(Produto p){
@@ -489,5 +536,29 @@ public class TabelaDePreco extends javax.swing.JFrame {
 					aliquota = p.getEstados().get(i).getAliquotaInterestadual();
 			}
 		}
+    }
+    
+    private void removeEstadoLista(Produto p, Estado e){
+    	for (int i = 0; i < listaDeProdutos.size(); i++)
+			if(listaDeProdutos.get(i).getCodigo() == p.getCodigo()){
+				for (int j = 0; j < p.getEstados().size(); j++)
+					if(p.getEstados().get(j).getUf() == e.getUf()){
+						p.getEstados().remove(j);
+						break;
+					}
+			}
+    }
+    
+    private List<Estado> x(){
+    	List<Estado> e = new ArrayList<Estado>();
+//    	for (int i = 0; i < tbl_impostos.getRowCount(); i++) {
+//    		try {
+//    			e.add(estadoDaTabela(i));
+//			} catch (Exception e2) {
+//				e2.printStackTrace();
+//			}
+//		}
+    	e.add(estadoDaTabela(0));
+    	return e;
     }
 }
