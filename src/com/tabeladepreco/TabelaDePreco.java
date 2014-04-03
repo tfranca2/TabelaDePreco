@@ -70,7 +70,6 @@ public class TabelaDePreco extends javax.swing.JFrame {
     private JLabel lbl_retido;
     private JLabel lbl_valoresPorEstado;
     private JTextField edt_codigo;
-    private JButton btn_Localizar;
     private JCheckBox chc_vendaDentroEstado;
     private JButton btn_calcular;
     
@@ -100,16 +99,6 @@ public class TabelaDePreco extends javax.swing.JFrame {
         }
         listaDeProdutos = new Xml().LerXml("produtos.xml");
         desenhaJanela();
-        
-        
-//										600ML			LATA			LONG NECK
-//		aliquota = 0.27f;														
-//		pauta =  2.47f;//				2.47f 			1.78f			1.81f
-//		quantidade = 24;				24				12				24
-//		ipi = 4.59504f;					4.59504f		1.24026f		2.42650f
-//		precoFinal = 0;					60.00f			14.50f			34.00f
-// 		precoFabrica					53.97173f		10.26375f		27.18452f
-		
     }
 
 	private void desenhaJanela() {
@@ -153,10 +142,12 @@ public class TabelaDePreco extends javax.swing.JFrame {
             cbx_codigoProduto.addItemListener(new ItemListener() {
             	public void itemStateChanged(ItemEvent e) {
             		resetFormulario();
-            		if( cbx_codigoProduto.getSelectedIndex() != 0 )
-                		pro = produtoDaListaPorCodigo(Integer.parseInt((String) cbx_codigoProduto.getSelectedItem()));
-            		else
-            			pro = null;
+            		try {
+            			if( cbx_codigoProduto.getSelectedIndex() != 0 )
+            				pro = produtoDaListaPorCodigo(Integer.parseInt((String) cbx_codigoProduto.getSelectedItem()));
+            			else
+            				pro = null;
+					} catch (Exception e2) { }
             		preencheCampos(pro);
             	}
             });
@@ -281,11 +272,11 @@ public class TabelaDePreco extends javax.swing.JFrame {
             pnl_cadastroProduto.setLayout(null);
             
             lbl_descricao = new JLabel("Descri\u00E7\u00E3o");
-            lbl_descricao.setBounds(85, 11, 58, 14);
+            lbl_descricao.setBounds(95, 11, 58, 14);
             pnl_cadastroProduto.add(lbl_descricao);
             
             edt_descricao = new JTextField();
-            edt_descricao.setBounds(85, 25, 204, 20);
+            edt_descricao.setBounds(95, 25, 194, 20);
             pnl_cadastroProduto.add(edt_descricao);
             edt_descricao.setColumns(10);
             
@@ -312,9 +303,10 @@ public class TabelaDePreco extends javax.swing.JFrame {
             pnl_cadastroProduto.add(scp_impostos);
             
             tbl_impostos = new JTable();
+            tbl_impostos.setToolTipText("Aperte <<enter>> para inserir uma nova linha.");
             tbl_impostos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
             model = new DefaultTableModel(
-                	new Object[][] {
+                	new String[][] {
                     		{null, null, null, null},
                     	},
                     	new String[] {
@@ -325,9 +317,17 @@ public class TabelaDePreco extends javax.swing.JFrame {
                 @Override  
                 public void keyPressed(KeyEvent e) {                  
                 	if(e.getKeyCode() == KeyEvent.VK_ENTER) { 
-                		model.addRow(new Object[]{null,null,null,null});  
+                		for (int i = 0; i < model.getRowCount(); i++) {
+							if(tbl_impostos.getValueAt(i, 0).equals(""))
+								break;
+							else if(i == model.getRowCount()-1)
+								model.addRow(new String[]{null,null,null,null});
+						}
                     }  
-                }  
+                	if(e.getKeyCode() == KeyEvent.VK_DELETE) { 
+                		excluirComponente();
+                	}  
+                }
             });
             tbl_impostos.addFocusListener(new FocusAdapter() {
             	@Override
@@ -348,17 +348,20 @@ public class TabelaDePreco extends javax.swing.JFrame {
             btn_salvar.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent arg0) {
                 	for (int i = 0; i < listaDeProdutos.size(); i++) {
-						if(listaDeProdutos.get(i).getCodigo() == Integer.parseInt(edt_codigo.getText())){
-							listaDeProdutos.get(i).setEstados(x());
-							break;
-						}
+                		try {
+                			if(listaDeProdutos.get(i).getCodigo() == Integer.parseInt(edt_codigo.getText())){
+                				listaDeProdutos.get(i).setEstados(estadosTabela());
+                				break;
+                			}
+						} catch (Exception e) {	}
 					}
-                	new Xml().criarArquivoXml(listaDeProdutos, "arquivo.xml");
-                	listaDeProdutos = new Xml().LerXml("arquivo.xml");
+                	new Xml().criarArquivoXml(listaDeProdutos, "produtos.xml");
+                	listaDeProdutos = new Xml().LerXml("produtos.xml");
                 	
-//                	cbx_codigoProduto.removeAllItems();
-//                	for (int i = 0; i < listaDeProdutos.size(); i++)
-//                    	cbx_codigoProduto.addItem(String.valueOf(listaDeProdutos.get(i).getCodigo()));
+                	cbx_codigoProduto.removeAllItems();
+                	cbx_codigoProduto.addItem("");
+                    for (int i = 0; i < listaDeProdutos.size(); i++)
+                    	cbx_codigoProduto.addItem(String.valueOf(listaDeProdutos.get(i).getCodigo()));
                 }
             });
             btn_salvar.setBounds(10, 282, 89, 23);
@@ -367,21 +370,7 @@ public class TabelaDePreco extends javax.swing.JFrame {
             btn_excluir = new JButton("Excluir");
             btn_excluir.addActionListener(new ActionListener() {
             	public void actionPerformed(ActionEvent arg0) {
-            		
-            		if(tbl_impostos.getSelectedRow() == -1){
-            			JOptionPane.showMessageDialog(null, "Selecione um registro para excluir!");
-            		}else{
-            			Object[] options = { "Sim", "Não" };
-            			int confirmacao = JOptionPane.showOptionDialog(null, "Tem certeza que deseja excluir a linha selecionada?",
-            					"Excluir registro", JOptionPane.YES_NO_OPTION, 
-            					JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-            			if(confirmacao==0){
-            				Estado e = estadoDaTabela(tbl_impostos.getSelectedRow());
-            				Produto p = produtoDaListaPorCodigo(Integer.parseInt(edt_codigo.getText()));
-            				removeEstadoLista(p, e);
-            				model.removeRow(tbl_impostos.getSelectedRow());
-            			}
-            		}
+            		excluirComponente();
             	}
             });
             btn_excluir.setBounds(360, 282, 89, 23);
@@ -404,7 +393,10 @@ public class TabelaDePreco extends javax.swing.JFrame {
             pnl_cadastroProduto.add(edt_codigo);
             edt_codigo.setColumns(10);
             
-            btn_Localizar = new JButton("...");
+            JButton btn_Localizar = new JButton("...");
+            btn_Localizar.setFocusable(false);
+            btn_Localizar.setFocusTraversalKeysEnabled(false);
+            btn_Localizar.setFocusPainted(false);
             btn_Localizar.setToolTipText("Localizar");
             btn_Localizar.addActionListener(new ActionListener() {
             	public void actionPerformed(ActionEvent arg0) {
@@ -420,7 +412,7 @@ public class TabelaDePreco extends javax.swing.JFrame {
                     dialog.setVisible(true);
             	}
             });
-            btn_Localizar.setBounds(60, 25, 20, 20);
+            btn_Localizar.setBounds(65, 25, 20, 20);
             pnl_cadastroProduto.add(btn_Localizar);
 
             pack();
@@ -464,18 +456,18 @@ public class TabelaDePreco extends javax.swing.JFrame {
     	return new Produto();
     }
     
-    private Estado estadoDaTabela(int row){
-    	
-    	System.out.println(tbl_impostos.getValueAt(row, 0));
-    	System.out.println(tbl_impostos.getValueAt(row, 1));
-    	System.out.println(tbl_impostos.getValueAt(row, 2));
-    	System.out.println(tbl_impostos.getValueAt(row, 3));
+    private Estado estadoDalinha(int linha){
+		String uf = (String) tbl_impostos.getValueAt(linha, 0);
+		String pauta = (String) tbl_impostos.getValueAt(linha, 1);
+		String aliquotaEstadual = (String) tbl_impostos.getValueAt(linha, 2);
+		String aliquotaInterestadual = (String) tbl_impostos.getValueAt(linha, 3);
     	
     	Estado estado = new Estado();
-    	estado.setUf((String) tbl_impostos.getValueAt(row, 0));
-    	estado.setPauta(Float.parseFloat((String) tbl_impostos.getValueAt(row, 1)));
-    	estado.setAliquotaEstadual(Float.parseFloat((String) tbl_impostos.getValueAt(row, 2)));
-    	estado.setAliquotaInterestadual(Float.parseFloat((String)  tbl_impostos.getValueAt(row, 3)));
+    	estado.setUf(uf);
+    	estado.setPauta(Float.parseFloat(pauta));
+    	estado.setAliquotaEstadual(Float.parseFloat(aliquotaEstadual));
+    	estado.setAliquotaInterestadual(Float.parseFloat(aliquotaInterestadual));
+    	
     	return estado;
     }
     
@@ -506,18 +498,17 @@ public class TabelaDePreco extends javax.swing.JFrame {
     		
     		try {
     			for (int i = 0; i < estados.size(); i++) {
-    				model.addRow(new Object[]{
-    						estados.get(i).getUf(),
-    						estados.get(i).getPauta(),
-    						estados.get(i).getAliquotaEstadual(),
-    						estados.get(i).getAliquotaInterestadual()
+    				model.addRow(new String[]{
+						estados.get(i).getUf(),
+						String.valueOf(estados.get(i).getPauta()),
+						String.valueOf(estados.get(i).getAliquotaEstadual()),
+						String.valueOf(estados.get(i).getAliquotaInterestadual())
     				});
     			}
 			} catch (Exception e) {
-				// se o codigo do produto nao existir criar novo
 				p.setCodigo(Integer.parseInt(edt_codigo.getText()));
 				listaDeProdutos.add(p);
-				model.addRow(new Object[]{null, null, null, null});
+				model.addRow(new String[]{null, null, null, null});
 			}
     	}
     }
@@ -549,16 +540,55 @@ public class TabelaDePreco extends javax.swing.JFrame {
 			}
     }
     
-    private List<Estado> x(){
+    private void removeProdutoLista(Produto p){
+    	for (int i = 0; i < listaDeProdutos.size(); i++)
+			if(listaDeProdutos.get(i).getCodigo() == p.getCodigo()){
+				listaDeProdutos.remove(i);
+				break;
+			}
+    }
+    
+    private List<Estado> estadosTabela(){
     	List<Estado> e = new ArrayList<Estado>();
-//    	for (int i = 0; i < tbl_impostos.getRowCount(); i++) {
-//    		try {
-//    			e.add(estadoDaTabela(i));
-//			} catch (Exception e2) {
-//				e2.printStackTrace();
-//			}
-//		}
-    	e.add(estadoDaTabela(0));
+    	for (int i = 0; i < tbl_impostos.getRowCount(); i++) {
+    		try {
+    			e.add(estadoDalinha(i));
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
+		}
     	return e;
+    }
+    
+    private void excluirComponente(){
+    	if(tbl_impostos.getSelectedRow() == -1){
+    		if(tbl_impostos.getRowCount()>0){
+    			JOptionPane.showMessageDialog(null, "Selecione um registro para excluir!");
+    		} else {
+    			Object[] options = { "Sim", "Não" };
+    			int confirmacao = JOptionPane.showOptionDialog(null, "Tem certeza que deseja excluir o produto selecionado?",
+    					"Excluir registro", JOptionPane.YES_NO_OPTION, 
+    					JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+    			if(confirmacao==0){
+    				Produto p = produtoDaListaPorCodigo(Integer.parseInt(edt_codigo.getText()));
+    				removeProdutoLista(p);
+    				edt_codigo.setText("");
+    				edt_descricao.setText("");
+    				edt_quantidade.setText("");
+    				edt_ipi.setText("");
+    			}
+    		}
+		} else {
+			Object[] options = { "Sim", "Não" };
+			int confirmacao = JOptionPane.showOptionDialog(null, "Tem certeza que deseja excluir a linha selecionada?",
+					"Excluir registro", JOptionPane.YES_NO_OPTION, 
+					JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+			if(confirmacao==0){
+				Estado e = estadoDalinha(tbl_impostos.getSelectedRow());
+				Produto p = produtoDaListaPorCodigo(Integer.parseInt(edt_codigo.getText()));
+				removeEstadoLista(p, e);
+				model.removeRow(tbl_impostos.getSelectedRow());
+			}
+		}
     }
 }
