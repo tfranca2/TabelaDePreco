@@ -83,6 +83,7 @@ public class TabelaDePreco extends javax.swing.JFrame {
     private JComboBox<String> cbx_estado;
     private JLabel lbl_estado;
     Produto pro = null;
+    private JButton btn_Localizar;
 
     public static void main(String[] args) {
         TabelaDePreco janela = new TabelaDePreco();
@@ -111,8 +112,8 @@ public class TabelaDePreco extends javax.swing.JFrame {
             setTitle("Montagem de Tabela de Pre\u00E7o");
 
             tbp_painel= new JTabbedPane();
-            getContentPane().add(tbp_painel);
             tbp_painel.setBounds(10, 11, 464, 350);
+            getContentPane().add(tbp_painel);
 
             pnl_tabelaDePreco= new JPanel();
             pnl_tabelaDePreco.setBounds(48, 35, 224, 204);
@@ -305,6 +306,7 @@ public class TabelaDePreco extends javax.swing.JFrame {
             tbl_impostos = new JTable();
             tbl_impostos.setToolTipText("Aperte <<enter>> para inserir uma nova linha.");
             tbl_impostos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            tbl_impostos.getTableHeader().setReorderingAllowed(false);
             model = new DefaultTableModel(
                 	new String[][] {
                     		{null, null, null, null},
@@ -393,7 +395,7 @@ public class TabelaDePreco extends javax.swing.JFrame {
             pnl_cadastroProduto.add(edt_codigo);
             edt_codigo.setColumns(10);
             
-            JButton btn_Localizar = new JButton("...");
+            btn_Localizar = new JButton("...");
             btn_Localizar.setFocusable(false);
             btn_Localizar.setFocusTraversalKeysEnabled(false);
             btn_Localizar.setFocusPainted(false);
@@ -410,6 +412,20 @@ public class TabelaDePreco extends javax.swing.JFrame {
                     dialog.setTitle("Localizar Produto");
                     dialog.setLocation(500, 200);
                     dialog.setVisible(true);
+                    
+                    try {
+                    	Produto p = produtoDaListaPorCodigo(Integer.parseInt((String) localizar.tbl_localizarProduto.getValueAt(localizar.tbl_localizarProduto.getSelectedRow(), 0)));
+                    	edt_codigo.setText(String.valueOf(p.getCodigo()));
+                    	limpaTabela();
+                    	preencheTabela(produtoDaListaPorCodigo(Integer.parseInt(edt_codigo.getText())));						
+					} catch (Exception e) {
+						limpaTabela();
+						edt_codigo.setText("");
+						edt_descricao.setText("");
+						edt_quantidade.setText("");
+						edt_ipi.setText("");
+						model.addRow(new String[]{ null, null, null, null });
+					}
             	}
             });
             btn_Localizar.setBounds(65, 25, 20, 20);
