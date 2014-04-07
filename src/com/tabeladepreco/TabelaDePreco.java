@@ -56,12 +56,12 @@ public class TabelaDePreco extends javax.swing.JFrame {
     private JButton btn_salvar;
     private JComboBox<String> cbx_codigoProduto;
     private JLabel lbl_codigoProduto;
-    private JTextField edt_produto;
-    private JTextField edt_precoFabrica;
-    private JTextField edt_icms;
-    private JTextField edt_baseRetido;
-    private JTextField edt_ipi_tbp;
-    private JTextField edt_retido;
+    private JLabel edt_produto;
+    private JLabel edt_precoFabrica;
+    private JLabel edt_icms;
+    private JLabel edt_baseRetido;
+    private JLabel edt_ipi_tbp;
+    private JLabel edt_retido;
     private JLabel lbl_produto;
     private JLabel lbl_precoFabrica;
     private JLabel lbl_icms;
@@ -172,68 +172,85 @@ public class TabelaDePreco extends javax.swing.JFrame {
             lbl_produto.setBounds(126, 49, 69, 14);
             pnl_tabelaDePreco.add(lbl_produto);
             
-            edt_produto = new JTextField();
+            edt_produto = new JLabel("");
+            edt_produto.setBorder(UIManager.getBorder("TextField.border"));
+            edt_produto.setOpaque(true);
+            edt_produto.setBackground(Color.white);
             edt_produto.setBounds(126, 63, 323, 20);
             pnl_tabelaDePreco.add(edt_produto);
-            edt_produto.setColumns(10);
             
             lbl_precoFabrica = new JLabel("Pre\u00E7o F\u00E1brica");
             lbl_precoFabrica.setBounds(186, 146, 80, 14);
             pnl_tabelaDePreco.add(lbl_precoFabrica);
             
-            edt_precoFabrica = new JTextField();
+            edt_precoFabrica = new JLabel("");
+            edt_precoFabrica.setBorder(UIManager.getBorder("TextField.border"));
+            edt_precoFabrica.setOpaque(true);
+            edt_precoFabrica.setBackground(Color.white);
             edt_precoFabrica.setBounds(186, 160, 86, 20);
             pnl_tabelaDePreco.add(edt_precoFabrica);
-            edt_precoFabrica.setColumns(10);
             
             lbl_icms = new JLabel("ICMS");
             lbl_icms.setBounds(282, 146, 46, 14);
             pnl_tabelaDePreco.add(lbl_icms);
             
-            edt_icms = new JTextField();
+            edt_icms = new JLabel("");
+            edt_icms.setBorder(UIManager.getBorder("TextField.border"));
+            edt_icms.setOpaque(true);
+            edt_icms.setBackground(Color.white);
             edt_icms.setBounds(282, 160, 86, 20);
             pnl_tabelaDePreco.add(edt_icms);
-            edt_icms.setColumns(10);
             
             lbl_baseRetido = new JLabel("Base Retido");
             lbl_baseRetido.setBounds(186, 191, 86, 14);
             pnl_tabelaDePreco.add(lbl_baseRetido);
             
-            edt_baseRetido = new JTextField();
+            edt_baseRetido = new JLabel("");
+            edt_baseRetido.setBorder(UIManager.getBorder("TextField.border"));
+            edt_baseRetido.setOpaque(true);
+            edt_baseRetido.setBackground(Color.white);
             edt_baseRetido.setBounds(186, 205, 86, 20);
             pnl_tabelaDePreco.add(edt_baseRetido);
-            edt_baseRetido.setColumns(10);
             
             lbl_ipi_tbp = new JLabel("IPI");
             lbl_ipi_tbp.setBounds(90, 191, 46, 14);
             pnl_tabelaDePreco.add(lbl_ipi_tbp);
             
-            edt_ipi_tbp = new JTextField();
+            edt_ipi_tbp = new JLabel("");
+            edt_ipi_tbp.setBorder(UIManager.getBorder("TextField.border"));
+            edt_ipi_tbp.setOpaque(true);
+            edt_ipi_tbp.setBackground(Color.white);
             edt_ipi_tbp.setBounds(90, 205, 86, 20);
             pnl_tabelaDePreco.add(edt_ipi_tbp);
-            edt_ipi_tbp.setColumns(10);
             
             lbl_retido = new JLabel("Retido");
             lbl_retido.setBounds(282, 191, 46, 14);
             pnl_tabelaDePreco.add(lbl_retido);
             
-            edt_retido = new JTextField();
+            edt_retido = new JLabel("");
+            edt_retido.setBorder(UIManager.getBorder("TextField.border"));
+            edt_retido.setOpaque(true);
+            edt_retido.setBackground(Color.white);
             edt_retido.setBounds(282, 205, 86, 20);
             pnl_tabelaDePreco.add(edt_retido);
-            edt_retido.setColumns(10);
             
             btn_calcular = new JButton("Calcular");
             btn_calcular.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent arg0) {
+                	
+                	// ALGORITMOS DE CALCULO
                 	try{
                 		precoFinal = Float.parseFloat(edt_precoFinal.getText());
                 		
                 		float baseDeCalculo = precoFinal-ipi-pauta;
+                		//float baseDeCalculo = 0;
+                		
                 		while(!bateuMetaCom(baseDeCalculo)){
                 			if(calcular(baseDeCalculo)<precoFinal)
                 				baseDeCalculo = baseDeCalculo+0.0001f;
                 			else if(calcular(baseDeCalculo)>precoFinal)
                 				baseDeCalculo = baseDeCalculo-0.00001f;
+                			System.out.println(baseDeCalculo);
                 		}
                 		edt_precoFabrica.setText(String.valueOf( baseDeCalculo ));
                 		edt_precoFabrica.setForeground(Color.RED);
@@ -251,6 +268,8 @@ public class TabelaDePreco extends javax.swing.JFrame {
                 		resetFormulario();
                 	}
                 }
+                // ------------------------------------------ //
+                
             });
             btn_calcular.setBounds(185, 288, 89, 23);
             pnl_tabelaDePreco.add(btn_calcular);
@@ -437,21 +456,7 @@ public class TabelaDePreco extends javax.swing.JFrame {
         }
     }
 
-    protected void resetFormulario() {
-    	edt_baseRetido.setText("");
-		edt_ipi_tbp.setText("");
-		edt_icms.setText("");
-		edt_baseRetido.setText("");
-		edt_retido.setText("");
-		edt_produto.setText("");
-		edt_precoFabrica.setText("");
-		edt_precoFabrica.setForeground(Color.BLACK);
-		lbl_precoFabrica.setForeground(Color.BLACK);
-		edt_precoFinal.setText("");;
-		edt_precoFinal.requestFocus();
-		cbx_estado.removeAllItems();
-	}
-
+    // ALGORITMOS DE CALCULO
 	private boolean bateuMetaCom(float baseDeCalculo){
     	float tentativa = calcular(baseDeCalculo);
         if(tentativa == precoFinal)
@@ -463,13 +468,30 @@ public class TabelaDePreco extends javax.swing.JFrame {
     private float calcular(float baseDeCalculo){
         return baseDeCalculo+ipi+(((pauta*quantidade)*aliquota)-(baseDeCalculo*aliquota));
     }
+    // ------------------------------------------ //
     
+    // USABILIDADE DA TABELA
     private Produto produtoDaListaPorCodigo(int codigo) {
     	for (int i = 0; i < listaDeProdutos.size(); i++) {
 			if( listaDeProdutos.get(i).getCodigo() == codigo ) 
 				return listaDeProdutos.get(i);
 		}
     	return new Produto();
+    }
+    
+    protected void resetFormulario() {
+    	edt_baseRetido.setText("");
+    	edt_ipi_tbp.setText("");
+    	edt_icms.setText("");
+    	edt_baseRetido.setText("");
+    	edt_retido.setText("");
+    	edt_produto.setText("");
+    	edt_precoFabrica.setText("");
+    	edt_precoFabrica.setForeground(Color.BLACK);
+    	lbl_precoFabrica.setForeground(Color.BLACK);
+    	edt_precoFinal.setText("");;
+    	edt_precoFinal.requestFocus();
+    	cbx_estado.removeAllItems();
     }
     
     private Estado estadoDalinha(int linha){
