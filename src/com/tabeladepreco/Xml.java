@@ -43,6 +43,27 @@ public class Xml {
 		} catch (IOException e) {
 			System.out.println("O arquivo não pode ser lido.");
 			e.printStackTrace();
+			
+			Produto p = new Produto();
+			p.setCodigo(0);
+			p.setDescricao("   ");
+			p.setIpi(0);
+			p.setQuantidade(0);
+			
+			List<Estado> es = new ArrayList<>();
+			Estado e1 = new Estado();
+			e1.setUf("  ");
+			e1.setPauta(0);
+			e1.setAliquotaEstadual(0);
+			e1.setAliquotaInterestadual(0);
+			es.add(e1);
+			
+			p.setEstados(es);
+			
+			List<Produto> ps = new ArrayList<Produto>();
+			ps.add(p);
+			
+			criarArquivoXml(ps, "produtos.xml");
 		}
 		return null;
 	}
