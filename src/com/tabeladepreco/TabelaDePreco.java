@@ -226,15 +226,21 @@ public class TabelaDePreco extends javax.swing.JFrame {
             btn_calcular.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent arg0) {
                 	try{
+                		
+                		// ================================================================================== //
+                		
                 		precoFinal = Float.parseFloat(edt_precoFinal.getText());
                 		
                 		float baseDeCalculo = precoFinal-ipi-pauta;
                 		while(!bateuMetaCom(baseDeCalculo)){
                 			if(calcular(baseDeCalculo)<precoFinal)
-                				baseDeCalculo = baseDeCalculo+0.0001f;
+                				baseDeCalculo = baseDeCalculo+0.00001f;
                 			else if(calcular(baseDeCalculo)>precoFinal)
-                				baseDeCalculo = baseDeCalculo-0.00001f;
+                				baseDeCalculo = baseDeCalculo-0.000001f;
                 		}
+                		
+                		// ================================================================================== //
+                		
                 		edt_precoFabrica.setText(String.valueOf( baseDeCalculo ));
                 		edt_precoFabrica.setForeground(Color.RED);
                 		lbl_precoFabrica.setForeground(Color.RED);
@@ -437,20 +443,7 @@ public class TabelaDePreco extends javax.swing.JFrame {
         }
     }
 
-    protected void resetFormulario() {
-    	edt_baseRetido.setText("");
-		edt_ipi_tbp.setText("");
-		edt_icms.setText("");
-		edt_baseRetido.setText("");
-		edt_retido.setText("");
-		edt_produto.setText("");
-		edt_precoFabrica.setText("");
-		edt_precoFabrica.setForeground(Color.BLACK);
-		lbl_precoFabrica.setForeground(Color.BLACK);
-		edt_precoFinal.setText("");;
-		edt_precoFinal.requestFocus();
-		cbx_estado.removeAllItems();
-	}
+	// ================================================================================== //
 
 	private boolean bateuMetaCom(float baseDeCalculo){
     	float tentativa = calcular(baseDeCalculo);
@@ -462,6 +455,23 @@ public class TabelaDePreco extends javax.swing.JFrame {
     
     private float calcular(float baseDeCalculo){
         return baseDeCalculo+ipi+(((pauta*quantidade)*aliquota)-(baseDeCalculo*aliquota));
+    }
+    
+    // ================================================================================== //
+    
+    protected void resetFormulario() {
+    	edt_baseRetido.setText("");
+    	edt_ipi_tbp.setText("");
+    	edt_icms.setText("");
+    	edt_baseRetido.setText("");
+    	edt_retido.setText("");
+    	edt_produto.setText("");
+    	edt_precoFabrica.setText("");
+    	edt_precoFabrica.setForeground(Color.BLACK);
+    	lbl_precoFabrica.setForeground(Color.BLACK);
+    	edt_precoFinal.setText("");;
+    	edt_precoFinal.requestFocus();
+    	cbx_estado.removeAllItems();
     }
     
     private Produto produtoDaListaPorCodigo(int codigo) {
