@@ -240,6 +240,9 @@ public class TabelaDePreco extends javax.swing.JFrame {
                 	
                 	// ALGORITMOS DE CALCULO
                 	try{
+                		
+                		// ================================================================================== //
+                		
                 		precoFinal = Float.parseFloat(edt_precoFinal.getText());
                 		
                 		float baseDeCalculo = precoFinal-ipi-pauta;
@@ -247,11 +250,13 @@ public class TabelaDePreco extends javax.swing.JFrame {
                 		
                 		while(!bateuMetaCom(baseDeCalculo)){
                 			if(calcular(baseDeCalculo)<precoFinal)
-                				baseDeCalculo = baseDeCalculo+0.0001f;
+                				baseDeCalculo = baseDeCalculo+0.00001f;
                 			else if(calcular(baseDeCalculo)>precoFinal)
-                				baseDeCalculo = baseDeCalculo-0.00001f;
-                			System.out.println(baseDeCalculo);
+                				baseDeCalculo = baseDeCalculo-0.000001f;
                 		}
+                		
+                		// ================================================================================== //
+                		
                 		edt_precoFabrica.setText(String.valueOf( baseDeCalculo ));
                 		edt_precoFabrica.setForeground(Color.RED);
                 		lbl_precoFabrica.setForeground(Color.RED);
@@ -456,7 +461,8 @@ public class TabelaDePreco extends javax.swing.JFrame {
         }
     }
 
-    // ALGORITMOS DE CALCULO
+	// ================================================================================== //
+
 	private boolean bateuMetaCom(float baseDeCalculo){
     	float tentativa = calcular(baseDeCalculo);
         if(tentativa == precoFinal)
@@ -468,9 +474,9 @@ public class TabelaDePreco extends javax.swing.JFrame {
     private float calcular(float baseDeCalculo){
         return baseDeCalculo+ipi+(((pauta*quantidade)*aliquota)-(baseDeCalculo*aliquota));
     }
-    // ------------------------------------------ //
     
-    // USABILIDADE DA TABELA
+    // ================================================================================== //
+    
     private Produto produtoDaListaPorCodigo(int codigo) {
     	for (int i = 0; i < listaDeProdutos.size(); i++) {
 			if( listaDeProdutos.get(i).getCodigo() == codigo ) 
