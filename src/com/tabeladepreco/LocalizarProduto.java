@@ -48,12 +48,12 @@ public class LocalizarProduto extends javax.swing.JFrame {
 		getContentPane().setLayout(null);
 		setBounds(500, 500, 387, 300);
 		
-		lbl_descricaoLocaizar = new JLabel("Descri\u00E7\u00E3o");
-		lbl_descricaoLocaizar.setBounds(10, 11, 46, 14);
+		lbl_descricaoLocaizar = new JLabel("Localizar: ");
+		lbl_descricaoLocaizar.setBounds(10, 11, 69, 14);
 		getContentPane().add(lbl_descricaoLocaizar);
 		
 		edt_descricaoLocalizar = new JTextField();
-		edt_descricaoLocalizar.setBounds(10, 36, 363, 20);
+		edt_descricaoLocalizar.setBounds(10, 25, 363, 20);
 		getContentPane().add(edt_descricaoLocalizar);
 		edt_descricaoLocalizar.addKeyListener(new KeyAdapter() {
 			@Override
@@ -127,7 +127,7 @@ public class LocalizarProduto extends javax.swing.JFrame {
 		tbl_localizarProduto.setRowSorter(sorter);
 		tbl_localizarProduto.setBounds(1, 85, 344, 309);		
 		scrollPane = new JScrollPane(tbl_localizarProduto);
-		scrollPane.setBounds(10, 67, 363, 149);
+		scrollPane.setBounds(10, 56, 363, 160);
 		getContentPane().add(scrollPane);
 		
 		btn_ok = new JButton("Ok");

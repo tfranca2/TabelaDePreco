@@ -238,24 +238,17 @@ public class TabelaDePreco extends javax.swing.JFrame {
             btn_calcular.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent arg0) {
                 	
-                	// ALGORITMOS DE CALCULO
                 	try{
-                		
-                		// ================================================================================== //
-                		
                 		precoFinal = Float.parseFloat(edt_precoFinal.getText());
                 		
-                		float baseDeCalculo = precoFinal-ipi-pauta;
-                		//float baseDeCalculo = 0;
+                		double baseDeCalculo = precoFinal-ipi-pauta;
                 		
                 		while(!bateuMetaCom(baseDeCalculo)){
                 			if(calcular(baseDeCalculo)<precoFinal)
-                				baseDeCalculo = baseDeCalculo+0.00001f;
+                				baseDeCalculo = baseDeCalculo+0.00001;
                 			else if(calcular(baseDeCalculo)>precoFinal)
-                				baseDeCalculo = baseDeCalculo-0.000001f;
+                				baseDeCalculo = baseDeCalculo-0.000001;
                 		}
-                		
-                		// ================================================================================== //
                 		
                 		edt_precoFabrica.setText(String.valueOf( baseDeCalculo ));
                 		edt_precoFabrica.setForeground(Color.RED);
@@ -272,9 +265,15 @@ public class TabelaDePreco extends javax.swing.JFrame {
                 		JOptionPane.showMessageDialog(null, "Preencha o campo com uma referencia válida!");
                 		resetFormulario();
                 	}
+                	
+                	String preco = edt_precoFabrica.getText(); 
+                	String inteiros = preco.substring( 0, preco.indexOf(".")+1 );
+            	    String decimais = preco.substring( preco.indexOf(".")+1, preco.length() ); 
+            	    decimais = decimais.substring(0,5);
+            	    preco = inteiros+decimais;
+            	    
+            	    edt_precoFabrica.setText(preco);
                 }
-                // ------------------------------------------ //
-                
             });
             btn_calcular.setBounds(185, 288, 89, 23);
             pnl_tabelaDePreco.add(btn_calcular);
@@ -355,15 +354,6 @@ public class TabelaDePreco extends javax.swing.JFrame {
                 	}  
                 }
             });
-            tbl_impostos.addFocusListener(new FocusAdapter() {
-            	@Override
-            	public void focusGained(FocusEvent arg0) {
-            		Produto p = produtoDaListaPorCodigo(Integer.parseInt(edt_codigo.getText()));
-            		p.setDescricao(edt_descricao.getText());
-            		p.setIpi(Float.parseFloat(edt_ipi.getText()));
-            		p.setQuantidade(Float.parseFloat(edt_quantidade.getText()));
-            	}
-            });
             scp_impostos.setViewportView(tbl_impostos);
             
             lbl_codigo = new JLabel("C\u00F3digo");
@@ -373,6 +363,12 @@ public class TabelaDePreco extends javax.swing.JFrame {
             btn_salvar = new JButton("Salvar");
             btn_salvar.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent arg0) {
+                	
+                	Produto p = produtoDaListaPorCodigo(Integer.parseInt(edt_codigo.getText()));
+            		p.setDescricao(edt_descricao.getText());
+            		p.setIpi(Float.parseFloat(edt_ipi.getText()));
+            		p.setQuantidade(Float.parseFloat(edt_quantidade.getText()));
+                	
                 	for (int i = 0; i < listaDeProdutos.size(); i++) {
                 		try {
                 			if(listaDeProdutos.get(i).getCodigo() == Integer.parseInt(edt_codigo.getText())){
@@ -429,9 +425,9 @@ public class TabelaDePreco extends javax.swing.JFrame {
             		LocalizarProduto localizar = new LocalizarProduto();
                     JDialog dialog = new JDialog(localizar, false);
                     
-                    dialog.setModal(true);// TRAVA O FOCO NA JANELA
-                    dialog.setContentPane(localizar.getContentPane());// INSERE O PAINEL PRONTO
-                    dialog.setBounds(localizar.getBounds());// INSERE AS CONFIGURACOES
+                    dialog.setModal(true);
+                    dialog.setContentPane(localizar.getContentPane());
+                    dialog.setBounds(localizar.getBounds());
                     dialog.setResizable(false);
                     dialog.setTitle("Localizar Produto");
                     dialog.setLocation(500, 200);
@@ -461,21 +457,17 @@ public class TabelaDePreco extends javax.swing.JFrame {
         }
     }
 
-	// ================================================================================== //
-
-	private boolean bateuMetaCom(float baseDeCalculo){
-    	float tentativa = calcular(baseDeCalculo);
+	private boolean bateuMetaCom(double baseDeCalculo){
+    	double tentativa = calcular(baseDeCalculo);
         if(tentativa == precoFinal)
             return true;
         else
             return false;
     }
     
-    private float calcular(float baseDeCalculo){
-        return baseDeCalculo+ipi+(((pauta*quantidade)*aliquota)-(baseDeCalculo*aliquota));
+    private float calcular(double baseDeCalculo){
+        return (float) (baseDeCalculo+ipi+(((pauta*quantidade)*aliquota)-(baseDeCalculo*aliquota)));
     }
-    
-    // ================================================================================== //
     
     private Produto produtoDaListaPorCodigo(int codigo) {
     	for (int i = 0; i < listaDeProdutos.size(); i++) {
@@ -620,6 +612,15 @@ public class TabelaDePreco extends javax.swing.JFrame {
     				edt_descricao.setText("");
     				edt_quantidade.setText("");
     				edt_ipi.setText("");
+    				
+    				new Xml().criarArquivoXml(listaDeProdutos, "produtos.xml");
+                	listaDeProdutos = new Xml().LerXml("produtos.xml");
+                	
+                	cbx_codigoProduto.removeAllItems();
+                	cbx_codigoProduto.addItem("");
+                    for (int i = 0; i < listaDeProdutos.size(); i++)
+                    	cbx_codigoProduto.addItem(String.valueOf(listaDeProdutos.get(i).getCodigo()));
+    				
     			}
     		}
 		} else {
